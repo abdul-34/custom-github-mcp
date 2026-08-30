@@ -202,3 +202,42 @@ nothing in the logs.
 The default is `0`, so a plain Droplet deploy is safe out of the box and you opt
 in when you add a proxy. The startup log prints the effective value — check it
 after deploying.
+
+## Troubleshooting
+
+### `Cannot find name 'process'` / `Cannot find name 'Buffer'` (TS2591) during build
+
+`NODE_ENV=production` makes npm skip `devDependencies` — which is where
+`typescript` and `@types/node` live. `tsc` then compiles without Node's type
+definitions and every `process.*` and `Buffer.*` reference fails.
+
+Build with dev dependencies explicitly:
+
+```
+npm ci --include=dev && npm run build
+```
+
+The bundled `render.yaml`, `.do/app.yaml`, and `Dockerfile` all do this. Only
+the *build* needs them; the runtime install stays production-only.
+
+### Render free tier: first request times out
+
+Free instances spin down after inactivity and take ~50s to wake. An MCP client
+will usually give up before the server answers, and the connection looks broken.
+
+Either upgrade to a paid instance, or accept that the first call after an idle
+period fails and needs a retry. Pinging `/health` on a schedule keeps it warm
+but burns your free instance hours.
+
+### `401` on every request
+
+Expected unless the client sends the token. Check that `MCP_AUTH_TOKEN` in the
+client config matches the deployed value exactly. `curl https://your-host/health`
+should return `{"status":"ok"}` without any auth — if that works and `/mcp`
+returns 401, the server is healthy and the token is the problem.
+
+### Rate limiting seems not to work
+
+Check the startup log line `Trust proxy:`. If it says X-Forwarded-For is trusted
+but nothing sits in front of the server, clients can spoof their IP. See
+[The TRUST_PROXY setting](#the-trust_proxy-setting).

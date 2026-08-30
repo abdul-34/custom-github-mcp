@@ -3,7 +3,10 @@ services:
     name: github-mcp
     runtime: node
     plan: free
-    buildCommand: npm ci && npm run build
+    # --include=dev is required: NODE_ENV=production below makes npm skip
+    # devDependencies, and typescript/@types/node live there. Without it the
+    # build fails with "Cannot find name 'process'" (TS2591).
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /health
     envVars:

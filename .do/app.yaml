@@ -10,7 +10,9 @@ services:
       deploy_on_push: true
 
     environment_slug: node-js
-    build_command: npm ci && npm run build
+    # --include=dev is required: NODE_ENV=production below makes npm skip
+    # devDependencies, where typescript and @types/node live.
+    build_command: npm ci --include=dev && npm run build
     run_command: npm start
 
     # Smallest shared-CPU instance. The server idles near 105 MB.

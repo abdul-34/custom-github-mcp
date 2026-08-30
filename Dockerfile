@@ -2,7 +2,8 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-RUN npm ci
+# Explicit --include=dev so this stays correct even if NODE_ENV is injected.
+RUN npm ci --include=dev
 COPY tsconfig.json ./
 COPY src ./src
 RUN npm run build
