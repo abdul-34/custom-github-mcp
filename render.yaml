@@ -1,0 +1,44 @@
+services:
+  - type: web
+    name: github-mcp
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      # GitHub PAT the tools act with. Scope it as tightly as you can.
+      - key: GITHUB_TOKEN
+        sync: false
+
+      # Shared secret clients must present. Render generates this on first
+      # deploy — read it from the dashboard to configure your MCP client.
+      - key: MCP_AUTH_TOKEN
+        generateValue: true
+
+      # Register read tools only. Flip to "true" if you don't need writes.
+      - key: MCP_READ_ONLY
+        value: "false"
+
+      # Comma-separated owner/repo allowlist. Empty = every repo the PAT sees.
+      - key: ALLOWED_REPOS
+        sync: false
+
+      # Set "true" only if your client cannot send an Authorization header.
+      - key: MCP_ALLOW_QUERY_TOKEN
+        value: "false"
+
+      # Browser origins allowed to call this server. Empty = none.
+      - key: ALLOWED_ORIGINS
+        sync: false
+
+      - key: RATE_LIMIT_PER_MINUTE
+        value: "240"
+      # Render terminates TLS at its proxy and overwrites X-Forwarded-For, so
+      # exactly one hop is trustworthy. Do NOT raise this — and on a bare VM
+      # with no proxy, leave it unset (the code defaults to 0).
+      - key: TRUST_PROXY
+        value: "1"
